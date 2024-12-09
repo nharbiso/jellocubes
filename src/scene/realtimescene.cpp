@@ -1,68 +1,62 @@
 #include "realtimescene.h"
 
-#include <unordered_map>
-#include "utils/shaderloader.h"
 #include "utils/sceneparser.h"
-#include "utils/objloader.h"
+#include "settings.h"
+#include "jellocube.h"
+#include <unordered_map>
 
 std::unordered_map<std::string, QImage> fileToTexture;
 
 RealtimeScene::RealtimeScene() {
     this->scenefile = "";
     this->camera = Camera();
-    this->primitives = std::vector<std::unique_ptr<Primitive>>();
 }
 
-void RealtimeScene::updateScene(std::string scenefile, TessellationParams& tslParams, GLuint shadowMapShader) {
-    this->shadowMapShader = shadowMapShader;
-    if(scenefile != this->scenefile) {
-        this->scenefile = scenefile;
-        RenderData renderData;
-        SceneParser::parse(this->scenefile, renderData);
+void RealtimeScene::initScene(GLuint shadowMapShader) {
+    RenderData renderData;
+    SceneParser::parse("scenefile.json", renderData);
 
-        // Create cache of OBJ filename to list of vertex data
-        std::unordered_map<std::string, std::vector<GLfloat>> objFileToVerts;
-        for(const RenderShapeData& shapeData : renderData.shapes) {
-            if(shapeData.primitive.type == PrimitiveType::PRIMITIVE_MESH &&
-               !objFileToVerts.contains(shapeData.primitive.meshfile)) {
-                objFileToVerts[shapeData.primitive.meshfile] = OBJLoader::parseObjFile(shapeData.primitive.meshfile);
-            }
+    fileToTexture.clear();
+    for(const RenderShapeData& shapeData : renderData.shapes) {
+        const SceneFileMap& textureMap = shapeData.primitive.material.textureMap;
+        if(textureMap.isUsed && !fileToTexture.contains(textureMap.filename)) {
+            fileToTexture[textureMap.filename] = QImage(textureMap.filename.c_str()).convertToFormat(QImage::Format_RGBA8888).mirrored();
         }
+    }
 
-        // Create cache of texture filename to image
-        fileToTexture.clear();
-        for(const RenderShapeData& shapeData : renderData.shapes) {
-            const SceneFileMap& textureMap = shapeData.primitive.material.textureMap;
-            if(textureMap.isUsed && !fileToTexture.contains(textureMap.filename)) {
-                fileToTexture[textureMap.filename] = QImage(textureMap.filename.c_str()).convertToFormat(QImage::Format_RGBA8888).mirrored();
-            }
-        }
+    RenderShapeData& shapeData = renderData.shapes[0];
+    bounds = 4;
+    std::unique_ptr<Primitive> boundingBox = std::make_unique<Cube>(
+        glm::scale(shapeData.ctm, glm::vec3(2 * bounds)),
+        shapeData.primitive.material,
+        8, true
+    );
+    boundingBox->initialize();
+    this->primitives.push_back(std::move(boundingBox));
 
-        this->primitives.clear(); // remove previous primitives and free any underlying memory
-        for(const RenderShapeData& shapeData : renderData.shapes) {
-            std::unique_ptr<Primitive> primitive;
-            if(shapeData.primitive.type == PrimitiveType::PRIMITIVE_CUBE) {
-                primitive = std::make_unique<Cube>(shapeData.ctm, shapeData.primitive.material, tslParams);
-            } else if(shapeData.primitive.type == PrimitiveType::PRIMITIVE_CONE) {
-                primitive = std::make_unique<Cone>(shapeData.ctm, shapeData.primitive.material, tslParams);
-            } else if(shapeData.primitive.type == PrimitiveType::PRIMITIVE_CYLINDER) {
-                primitive = std::make_unique<Cylinder>(shapeData.ctm, shapeData.primitive.material, tslParams);
-            } else if(shapeData.primitive.type == PrimitiveType::PRIMITIVE_SPHERE) {
-                primitive = std::make_unique<Sphere>(shapeData.ctm, shapeData.primitive.material, tslParams);
-            } else if(shapeData.primitive.type == PrimitiveType::PRIMITIVE_MESH) {
-                primitive = std::make_unique<Primitive>(
-                    shapeData.ctm, shapeData.primitive.material, objFileToVerts[shapeData.primitive.meshfile]
-                );
-            }
-            primitive->initialize(); // initialize any OpenGL-related objects and vertex data
-            this->primitives.push_back(std::move(primitive));
-        }
-        this->camera.updateCamera(renderData.cameraData);
-        this->globalData = renderData.globalData;
+    SceneMaterial jelloMaterial = {
+        .cAmbient = glm::vec4(0.2, 0.8, 0.2, 1),
+        .cDiffuse = glm::vec4(0.2, 0.8, 0.2, 0.5),
+        .cSpecular = glm::vec4(0.2, 0.8, 0.2, 1),
+        .shininess = 10
+    };
+    std::unique_ptr<Primitive> jelloCube = std::make_unique<JelloCube>(jelloMaterial, 8, glm::vec3(0, 0, 0));
+    jelloCube->initialize();
+    this->primitives.push_back(std::move(jelloCube));
 
-        this->lights.clear(); // remove previous lights and free any underlying memory
-        for(int i = 0; i < renderData.lights.size(); i++)
-            this->lights.push_back(Light(renderData.lights[i], this->primitives, this->shadowMapShader, i+1));
+    this->camera.updateCamera(renderData.cameraData);
+    this->globalData = renderData.globalData;
+
+    this->lights.clear(); // remove previous lights and free any underlying memory
+    for(int i = 0; i < renderData.lights.size(); i++) {
+        this->lights.push_back(Light(renderData.lights[i], this->primitives, shadowMapShader, i+1));
+    }
+}
+
+void RealtimeScene::updateScene() {
+    for(int i = 1; i < this->primitives.size(); i++) {
+        JelloCube* jelloCube = static_cast<JelloCube*>(this->primitives[i].get());
+        jelloCube->update();
     }
 }
 
@@ -130,10 +124,6 @@ void RealtimeScene::bindSceneUniforms(GLuint shader) {
 
 std::vector<std::unique_ptr<Primitive>>& RealtimeScene::getPrimitives() {
     return this->primitives;
-}
-
-std::vector<Light>& RealtimeScene::getLights() {
-    return this->lights;
 }
 
 Camera& RealtimeScene::getCamera() {

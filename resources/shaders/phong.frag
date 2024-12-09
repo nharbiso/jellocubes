@@ -113,5 +113,6 @@ void main() {
             }
             fragColor += specular;
         }
+        fragColor.a = materialDiffuse.a;
     }
 }

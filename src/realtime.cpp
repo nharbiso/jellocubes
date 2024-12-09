@@ -31,17 +31,8 @@ void Realtime::finish() {
 
     // Students: anything requiring OpenGL calls when the program exits should be done here
     glErrorCheck(glDeleteProgram(this->phongShader));
-    this->scene.getPrimitives().clear(); // remove previous primitives and free any underlying memory
-    this->scene.getLights().clear();
-
-    glErrorCheck(glDeleteProgram(this->pixelFilterShader));
-    glErrorCheck(glDeleteProgram(this->kernelFilterShader));
-    glErrorCheck(glDeleteProgram(this->sobelCombineShader));
-    glErrorCheck(glDeleteVertexArrays(1, &this->fullscreenVAO));
-    glErrorCheck(glDeleteBuffers(1, &this->fullscreenVBO));
-    glErrorCheck(glDeleteTextures(this->numFBOs, this->outputTextures));
-    glErrorCheck(glDeleteRenderbuffers(this->numFBOs, this->outputRenderbuffers));
-    glErrorCheck(glDeleteFramebuffers(this->numFBOs, this->outputFBOs));
+    glErrorCheck(glDeleteProgram(this->shadowMapShader));
+    this->scene.free();
 
     this->doneCurrent();
 }
@@ -49,7 +40,7 @@ void Realtime::finish() {
 void Realtime::initializeGL() {
     m_devicePixelRatio = this->devicePixelRatio();
 
-    m_timer = startTimer(1000/60);
+    m_timer = startTimer(1);
     m_elapsedTimer.start();
 
     // Initializing GL.
@@ -71,6 +62,9 @@ void Realtime::initializeGL() {
     glViewport(0, 0, this->screenWidth, this->screenHeight);
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
+    glErrorCheck(glEnable(GL_BLEND));
+    glErrorCheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    glErrorCheck(glBlendEquation(GL_FUNC_ADD));
 
     // Initialize all shaders, set any textures they use to the used texture slot
     this->phongShader = ShaderLoader::createShaderProgram("resources/shaders/phong.vert", "resources/shaders/phong.frag");
@@ -81,113 +75,13 @@ void Realtime::initializeGL() {
 
     this->shadowMapShader = ShaderLoader::createShaderProgram("resources/shaders/shadowmap.vert", "resources/shaders/shadowmap.frag");
     glErrorCheck();
-    glErrorCheck(glUseProgram(0));
 
-    this->pixelFilterShader = ShaderLoader::createShaderProgram("resources/shaders/postprocess.vert", "resources/shaders/pixelfilter.frag");
-    glErrorCheck();
-    glErrorCheck(glUseProgram(this->pixelFilterShader));
-    glErrorCheck(glUniform1i(glGetUniformLocation(this->pixelFilterShader, "outputImage"), 0));
-    glErrorCheck(glUseProgram(0));
-
-    this->kernelFilterShader = ShaderLoader::createShaderProgram("resources/shaders/postprocess.vert", "resources/shaders/kernelfilter.frag");
-    glErrorCheck();
-    glErrorCheck(glUseProgram(this->kernelFilterShader));
-    glErrorCheck(glUniform1i(glGetUniformLocation(this->kernelFilterShader, "outputImage"), 0));
-    glErrorCheck(glUseProgram(0));
-
-    this->sobelCombineShader = ShaderLoader::createShaderProgram("resources/shaders/postprocess.vert", "resources/shaders/sobelcombine.frag");
-    glErrorCheck();
-    glErrorCheck(glUseProgram(this->sobelCombineShader));
-    glErrorCheck(glUniform1i(glGetUniformLocation(this->sobelCombineShader, "outputXImage"), 0));
-    glErrorCheck(glUniform1i(glGetUniformLocation(this->sobelCombineShader, "outputYImage"), 1));
-    glErrorCheck(glUseProgram(0));
-
-    std::vector<GLfloat> fullscreen_quad_data = {
-        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, -1.0f, 0.0f, 1.0f, 0.0f
-    };
-
-    // Generate and bind a VBO and a VAO for a fullscreen quad
-    glErrorCheck(glGenBuffers(1, &this->fullscreenVBO));
-    glErrorCheck(glBindBuffer(GL_ARRAY_BUFFER, this->fullscreenVBO));
-    glErrorCheck(glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size()*sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW));
-    glErrorCheck(glGenVertexArrays(1, &this->fullscreenVAO));
-    glErrorCheck(glBindVertexArray(this->fullscreenVAO));
-
-    // Add attributes to VAO
-    glErrorCheck(glEnableVertexAttribArray(0));
-    glErrorCheck(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), nullptr));
-    glErrorCheck(glEnableVertexAttribArray(1));
-    glErrorCheck(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat))));
-
-    // Unbind the fullscreen quad's VBO and VAO
-    glErrorCheck(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    glErrorCheck(glBindVertexArray(0));
-
-    this->makeFullscreenFBOs();
-}
-
-void Realtime::makeFullscreenFBOs() {
-    for(int i = 0; i < this->numFBOs; i++) {
-        // Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
-        glErrorCheck(glGenTextures(1, &this->outputTextures[i]));
-        glErrorCheck(glActiveTexture(GL_TEXTURE0));
-        glErrorCheck(glBindTexture(GL_TEXTURE_2D, this->outputTextures[i]));
-
-        glErrorCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->screenWidth, this->screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
-        glErrorCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-        glErrorCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-        glErrorCheck(glBindTexture(GL_TEXTURE_2D, 0));
-
-        // Generate and bind a renderbuffer of the right size, set its format, then unbind
-        glErrorCheck(glGenRenderbuffers(1, &this->outputRenderbuffers[i]));
-        glErrorCheck(glBindRenderbuffer(GL_RENDERBUFFER, this->outputRenderbuffers[i]));
-        glErrorCheck(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, this->screenWidth, this->screenHeight));
-        glErrorCheck(glBindRenderbuffer(GL_RENDERBUFFER, 0));
-
-        // Generate and bind FBO
-        glErrorCheck(glGenFramebuffers(1, &this->outputFBOs[i]));
-        glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, this->outputFBOs[i]));
-
-        // Add texture as a color attachment, and renderbuffer as a depth+stencil attachment, to FBO
-        glErrorCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->outputTextures[i], 0));
-        glErrorCheck(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->outputRenderbuffers[i]));
-
-        // Unbind the FBO
-        glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    }
+    scene.initScene(this->shadowMapShader);
 }
 
 void Realtime::paintGL() {
     // Students: anything requiring OpenGL calls every frame should be done here
-
-    // Find number of single-pass post-processing effects and their arguments
-    std::vector<std::tuple<GLuint, int, std::function<void()>>> postProcessArgs;
-    if(settings.perPixelFilter1 || settings.perPixelFilter2 || settings.perPixelFilter3) {
-        std::function<void()> bindUniforms = std::bind(&Realtime::bindPixelFilters, this);
-        postProcessArgs.push_back({this->pixelFilterShader, 1, bindUniforms});
-    }
-    if(settings.kernelBasedFilter1) {
-        std::function<void()> bindUniforms = std::bind(&Realtime::bindKernelFilter, this, this->sharpenKernel, 3);
-        postProcessArgs.push_back({this->kernelFilterShader, 1, bindUniforms});
-    }
-    if(settings.kernelBasedFilter2) {
-        std::function<void()> bindUniforms = std::bind(&Realtime::bindKernelFilter, this, this->blurKernel, 5);
-        postProcessArgs.push_back({this->kernelFilterShader, 1, bindUniforms});
-    }
-    int numEffects = postProcessArgs.size() + settings.kernelBasedFilter3;
-    int inputInd = 0;
-    int outputInd = (postProcessArgs.size() % 2 == 0) ? 0 : 1;
-
     // Render main image
-    // Bind output FBO (input for post-processing)
-    GLuint outputFBO = (numEffects == 0) ? this->defaultFBO : this->outputFBOs[outputInd];
-    glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, outputFBO));
     glErrorCheck(glViewport(0, 0, this->screenWidth, this->screenHeight));
 
     // Clear screen color and depth before painting
@@ -205,58 +99,6 @@ void Realtime::paintGL() {
 
     // Deactivate shader program
     glErrorCheck(glUseProgram(0));
-
-
-    // Apply single-pass post-processing effects
-    int numApplied = 0;
-    for(auto& [shader, numInputTextures, bindUniforms] : postProcessArgs) {
-        inputInd = outputInd;
-        outputInd = (inputInd + 1) % 2;
-        outputFBO = (numApplied == numEffects - 1) ? this->defaultFBO : this->outputFBOs[outputInd];
-        this->postProcessFilter(shader, &this->outputTextures[inputInd], numInputTextures, outputFBO, bindUniforms);
-        numApplied++;
-    }
-
-    // Apply multi-pass post-processing effects
-    if(settings.kernelBasedFilter3) {
-        // Due to configuration of input/output FBOs, last render outputted to index 0
-        std::function<void()> bindXUniforms = std::bind(&Realtime::bindKernelFilter, this, this->sobelXKernel, 3);
-        this->postProcessFilter(this->kernelFilterShader, &this->outputTextures[0], 1, this->outputFBOs[1], bindXUniforms);
-        std::function<void()> bindYUniforms = std::bind(&Realtime::bindKernelFilter, this, this->sobelYKernel, 3);
-        this->postProcessFilter(this->kernelFilterShader, &this->outputTextures[0], 1, this->outputFBOs[2], bindYUniforms);
-
-        this->postProcessFilter(this->sobelCombineShader, &this->outputTextures[1], 2, this->defaultFBO, [](){});
-    }
-}
-
-void Realtime::postProcessFilter(GLuint shader, GLuint* inputTextures, int numInputTextures,
-                                 GLuint outputFBO, std::function<void()> bindUniforms) {
-    // Bind to output FBO, render output with post processing
-    glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, outputFBO));
-    glErrorCheck(glViewport(0, 0, this->screenWidth, this->screenHeight));
-    glErrorCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
-    // Bind shader, set any post-processing uniforms
-    glErrorCheck(glUseProgram(shader));
-    bindUniforms();
-
-    // Bind fullscreen VAO and input texture(s)
-    glErrorCheck(glBindVertexArray(this->fullscreenVAO));
-    for(int i = 0; i < numInputTextures; i++) {
-        glErrorCheck(glActiveTexture(this->textureMacros[i]));
-        glErrorCheck(glBindTexture(GL_TEXTURE_2D, inputTextures[i]));
-    }
-
-    // Draw fullscreen vertices
-    glErrorCheck(glDrawArrays(GL_TRIANGLES, 0, 6));
-
-    // Unbind texture(s), VAO, and shader
-    for(int i = 0; i < numInputTextures; i++) {
-        glErrorCheck(glActiveTexture(this->textureMacros[i]));
-        glErrorCheck(glBindTexture(GL_TEXTURE_2D, 0));
-    }
-    glErrorCheck(glBindVertexArray(0));
-    glErrorCheck(glUseProgram(0));
 }
 
 void Realtime::resizeGL(int w, int h) {
@@ -265,30 +107,23 @@ void Realtime::resizeGL(int w, int h) {
     this->screenHeight = round(size().height() * m_devicePixelRatio);
     glErrorCheck(glViewport(0, 0, this->screenWidth, this->screenHeight));
 
-    glErrorCheck(glDeleteTextures(this->numFBOs, this->outputTextures));
-    glErrorCheck(glDeleteRenderbuffers(this->numFBOs, this->outputRenderbuffers));
-    glErrorCheck(glDeleteFramebuffers(this->numFBOs, this->outputFBOs));
-
-    // Regenerate FBO
-    this->makeFullscreenFBOs();
-
     // Students: anything requiring OpenGL calls when the window resizes should be done here
     this->scene.getCamera().updateAspectRatio((float) w / h);
 }
 
 void Realtime::sceneChanged() {
     this->makeCurrent();
-    TessellationParams tslParams = {
-        .param1 = settings.shapeParameter1,
-        .param2 = settings.shapeParameter2,
-        .limitByNum = settings.extraCredit1,
-        .numPrimitives = scene.getPrimitives().size(),
-        .limitByDist = settings.extraCredit2,
-        .cameraPos = scene.getCamera().getPosition(),
-        .nearPlane = settings.nearPlane,
-        .farPlane = settings.farPlane
-    };
-    this->scene.updateScene(settings.sceneFilePath, tslParams, this->shadowMapShader);
+    // TessellationParams tslParams = {
+    //     .param1 = settings.shapeParameter1,
+    //     .param2 = settings.shapeParameter2,
+    //     .limitByNum = settings.extraCredit1,
+    //     .numPrimitives = scene.getPrimitives().size(),
+    //     .limitByDist = settings.extraCredit2,
+    //     .cameraPos = scene.getCamera().getPosition(),
+    //     .nearPlane = settings.nearPlane,
+    //     .farPlane = settings.farPlane
+    // };
+    // this->scene.updateScene(settings.sceneFilePath, tslParams, this->shadowMapShader);
     // this->defaultFBO = this->numFBOs + this->scene.getLights().size() + 1;
     update(); // asks for a PaintGL() call to occur
 }
@@ -297,18 +132,18 @@ void Realtime::settingsChanged() {
     this->makeCurrent();
     this->scene.getCamera().updatePlanes(settings.nearPlane, settings.farPlane);
 
-    TessellationParams tslParams = {
-        .param1 = settings.shapeParameter1,
-        .param2 = settings.shapeParameter2,
-        .limitByNum = settings.extraCredit1,
-        .numPrimitives = scene.getPrimitives().size(),
-        .limitByDist = settings.extraCredit2,
-        .cameraPos = scene.getCamera().getPosition(),
-        .nearPlane = settings.nearPlane,
-        .farPlane = settings.farPlane
-    };
-    for(const std::unique_ptr<Primitive>& primitive : this->scene.getPrimitives())
-        primitive->updateParams(tslParams);
+    // TessellationParams tslParams = {
+    //     .param1 = settings.shapeParameter1,
+    //     .param2 = settings.shapeParameter2,
+    //     .limitByNum = settings.extraCredit1,
+    //     .numPrimitives = scene.getPrimitives().size(),
+    //     .limitByDist = settings.extraCredit2,
+    //     .cameraPos = scene.getCamera().getPosition(),
+    //     .nearPlane = settings.nearPlane,
+    //     .farPlane = settings.farPlane
+    // };
+    // for(const std::unique_ptr<Primitive>& primitive : this->scene.getPrimitives())
+    //     primitive->updateParams(tslParams);
 
     update(); // asks for a PaintGL() call to occur
 }
@@ -383,18 +218,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
     camera.updatePos(oldPos);
 
     this->makeCurrent();
-    TessellationParams tslParams = {
-        .param1 = settings.shapeParameter1,
-        .param2 = settings.shapeParameter2,
-        .limitByNum = settings.extraCredit1,
-        .numPrimitives = scene.getPrimitives().size(),
-        .limitByDist = settings.extraCredit2,
-        .cameraPos = scene.getCamera().getPosition(),
-        .nearPlane = settings.nearPlane,
-        .farPlane = settings.farPlane
-    };
-    for(const std::unique_ptr<Primitive>& primitive : this->scene.getPrimitives())
-        primitive->updateParams(tslParams);
+    this->scene.updateScene();
 
     update(); // asks for a PaintGL() call to occur
 }

@@ -42,7 +42,6 @@ const void Camera::updatePlanes(float nearPlane, float farPlane) {
 
 const void Camera::updatePos(glm::vec4 pos) {
     bool viewChanged = this->pos != pos;
-    // std::cout << "old position: " << glm::to_string(this->pos) << ", new position: " << glm::to_string(pos) << std::endl;
     this->pos = pos;
     if(viewChanged) {
         calcViewMat();
@@ -82,7 +81,7 @@ void Camera::calcViewMat() {
 }
 
 void Camera::calcProjMat() {
-    float farHalfHeight = farPlane * tan(heightAngle / 2);
+    float farHalfHeight = farPlane * tan(this->heightAngle / 2);
     float farHalfWidth = farHalfHeight * this->aspectRatio;
     glm::mat4 scaleMat(
         1 / farHalfWidth, 0, 0, 0,

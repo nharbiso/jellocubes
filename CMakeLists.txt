@@ -45,9 +45,10 @@ add_executable(${PROJECT_NAME}
     src/scene/primitives.h src/scene/primitives.cpp
     src/scene/camera.h src/scene/camera.cpp
     src/utils/debug.h
-    src/utils/objloader.h
+
     src/utils/clickablelabel.h
     src/scene/lightcamera.h
+    src/scene/jellocube.h src/scene/jellocube.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -74,10 +75,6 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
     FILES
         resources/shaders/phong.frag
         resources/shaders/phong.vert
-        resources/shaders/postprocess.vert
-        resources/shaders/pixelfilter.frag
-        resources/shaders/kernelfilter.frag
-        resources/shaders/sobelcombine.frag
         resources/shaders/shadowmap.frag
         resources/shaders/shadowmap.vert
 )

@@ -25,4 +25,6 @@ struct Settings {
 // The global Settings object, will be initialized by MainWindow
 extern Settings settings;
 
+extern int bounds;
+
 #endif // SETTINGS_H

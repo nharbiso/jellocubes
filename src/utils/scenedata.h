@@ -87,8 +87,6 @@ struct SceneCameraData {
 
 // Struct which contains data for texture mapping files
 struct SceneFileMap {
-    SceneFileMap() : isUsed(false) {}
-
     bool isUsed;
     std::string filename;
 

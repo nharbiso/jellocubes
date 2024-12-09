@@ -1,0 +1,51 @@
+{
+  "name": "root",
+  "globalData": {
+    "ambientCoeff": 0.5,
+    "diffuseCoeff": 0.5,
+    "specularCoeff": 0.5,
+    "transparentCoeff": 0
+  },
+  "cameraData": {
+    "position": [15.0, 1.0, 15.0],
+    "up": [0.0, 1.0, 0.0],
+    "focus": [0, 0, 0],
+    "heightAngle": 30.0
+  },
+  "groups": [
+    {
+      "lights": [
+        {
+          "type": "point",
+          "color": [1.0, 1.0, 1.0],
+          "attenuationCoeff": [1.0, 0.0, 0.0]
+        }
+      ]
+    },
+    {
+      "lights": [
+        {
+          "type": "directional",
+          "color": [0.4, 0.4, 0.4],
+          "direction": [0, -1.0, 0]
+        }
+      ]
+    },
+    {
+      "groups": [
+        {
+          "primitives": [
+            {
+              "type": "cube",
+              "diffuse": [0.4, 0.4, 0.4],
+              "blend": 0.5,
+              "textureFile": "textures/steel.jpg",
+              "textureU": 1.0,
+              "textureV": 1.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

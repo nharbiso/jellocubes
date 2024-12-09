@@ -244,6 +244,7 @@ bool ScenefileReader::parseLightData(const QJsonObject &lightData, SceneNode *no
     light->color.r = colorArray[0].toDouble();
     light->color.g = colorArray[1].toDouble();
     light->color.b = colorArray[2].toDouble();
+    light->color.a = 1;
 
     // parse the type
     if (!lightData["type"].isString()) {
@@ -887,6 +888,7 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
 
             mat.cAmbient[i] = ambientArray[i].toDouble();
         }
+        mat.cAmbient.a = 1;
     }
 
     if (prim.contains("diffuse")) {
@@ -908,6 +910,7 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
 
             mat.cDiffuse[i] = diffuseArray[i].toDouble();
         }
+        mat.cDiffuse.a = 1;
     }
 
     if (prim.contains("specular")) {
@@ -929,6 +932,7 @@ bool ScenefileReader::parsePrimitive(const QJsonObject &prim, SceneNode *node) {
 
             mat.cSpecular[i] = specularArray[i].toDouble();
         }
+        mat.cSpecular.a = 1;
     }
 
     if (prim.contains("reflective")) {
