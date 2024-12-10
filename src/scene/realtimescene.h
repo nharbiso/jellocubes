@@ -38,6 +38,7 @@ public:
     RealtimeScene();
 
     void initScene(GLuint shadowMapShader);
+    void resetScene();
     void free() {
         this->primitives.clear();
         this->lights.clear();

@@ -91,8 +91,8 @@ void Realtime::paintGL() {
     glErrorCheck(glUseProgram(this->phongShader));
 
     this->scene.bindSceneUniforms(this->phongShader);
-    glErrorCheck(glUniform1i(glGetUniformLocation(this->phongShader, "textureMapEnabled"), settings.extraCredit3));
-    glErrorCheck(glUniform1i(glGetUniformLocation(this->phongShader, "shadowMapEnabled"), settings.extraCredit4));
+    glErrorCheck(glUniform1i(glGetUniformLocation(this->phongShader, "textureMapEnabled"), settings.textureMappingEnabled));
+    glErrorCheck(glUniform1i(glGetUniformLocation(this->phongShader, "shadowMapEnabled"), false));
 
     for(const std::unique_ptr<Primitive>& primitive : this->scene.getPrimitives())
         primitive->draw(this->phongShader, false);
@@ -111,39 +111,16 @@ void Realtime::resizeGL(int w, int h) {
     this->scene.getCamera().updateAspectRatio((float) w / h);
 }
 
-void Realtime::sceneChanged() {
+void Realtime::resetScene() {
     this->makeCurrent();
-    // TessellationParams tslParams = {
-    //     .param1 = settings.shapeParameter1,
-    //     .param2 = settings.shapeParameter2,
-    //     .limitByNum = settings.extraCredit1,
-    //     .numPrimitives = scene.getPrimitives().size(),
-    //     .limitByDist = settings.extraCredit2,
-    //     .cameraPos = scene.getCamera().getPosition(),
-    //     .nearPlane = settings.nearPlane,
-    //     .farPlane = settings.farPlane
-    // };
-    // this->scene.updateScene(settings.sceneFilePath, tslParams, this->shadowMapShader);
-    // this->defaultFBO = this->numFBOs + this->scene.getLights().size() + 1;
+
+    this->scene.resetScene();
+
     update(); // asks for a PaintGL() call to occur
 }
 
-void Realtime::settingsChanged() {
+void Realtime::scatterCube() {
     this->makeCurrent();
-    this->scene.getCamera().updatePlanes(settings.nearPlane, settings.farPlane);
-
-    // TessellationParams tslParams = {
-    //     .param1 = settings.shapeParameter1,
-    //     .param2 = settings.shapeParameter2,
-    //     .limitByNum = settings.extraCredit1,
-    //     .numPrimitives = scene.getPrimitives().size(),
-    //     .limitByDist = settings.extraCredit2,
-    //     .cameraPos = scene.getCamera().getPosition(),
-    //     .nearPlane = settings.nearPlane,
-    //     .farPlane = settings.farPlane
-    // };
-    // for(const std::unique_ptr<Primitive>& primitive : this->scene.getPrimitives())
-    //     primitive->updateParams(tslParams);
 
     update(); // asks for a PaintGL() call to occur
 }
@@ -221,68 +198,4 @@ void Realtime::timerEvent(QTimerEvent *event) {
     this->scene.updateScene();
 
     update(); // asks for a PaintGL() call to occur
-}
-
-// DO NOT EDIT
-void Realtime::saveViewportImage(std::string filePath) {
-    // Make sure we have the right context and everything has been drawn
-    makeCurrent();
-
-    int fixedWidth = 1024;
-    int fixedHeight = 768;
-
-    // Create Frame Buffer
-    GLuint fbo;
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    // Create a color attachment texture
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fixedWidth, fixedHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-
-    // Optional: Create a depth buffer if your rendering uses depth testing
-    GLuint rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, fixedWidth, fixedHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "Error: Framebuffer is not complete!" << std::endl;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        return;
-    }
-
-    // Render to the FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glViewport(0, 0, fixedWidth, fixedHeight);
-
-    // Clear and render your scene here
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    paintGL();
-
-    // Read pixels from framebuffer
-    std::vector<unsigned char> pixels(fixedWidth * fixedHeight * 3);
-    glReadPixels(0, 0, fixedWidth, fixedHeight, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
-
-    // Unbind the framebuffer to return to default rendering to the screen
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // Convert to QImage
-    QImage image(pixels.data(), fixedWidth, fixedHeight, QImage::Format_RGB888);
-    QImage flippedImage = image.mirrored(); // Flip the image vertically
-
-    // Save to file using Qt
-    QString qFilePath = QString::fromStdString(filePath);
-    if (!flippedImage.save(qFilePath)) {
-        std::cerr << "Failed to save image to " << filePath << std::endl;
-    }
-
-    // Clean up
-    glDeleteTextures(1, &texture);
-    glDeleteRenderbuffers(1, &rbo);
-    glDeleteFramebuffers(1, &fbo);
 }

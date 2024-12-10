@@ -21,9 +21,9 @@ class Realtime : public QOpenGLWidget
 public:
     Realtime(QWidget *parent = nullptr);
     void finish();                                      // Called on program exit
-    void sceneChanged();
-    void settingsChanged();
-    void saveViewportImage(std::string filePath);
+
+    void resetScene();
+    void scatterCube();
 
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer

@@ -46,7 +46,7 @@ add_executable(${PROJECT_NAME}
     src/scene/camera.h src/scene/camera.cpp
     src/utils/debug.h
 
-    src/utils/clickablelabel.h
+
     src/scene/lightcamera.h
     src/scene/jellocube.h src/scene/jellocube.cpp
 )

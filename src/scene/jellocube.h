@@ -44,14 +44,6 @@ private:
     inline int getInd(int i, int j, int k) {
         return i * (this->param + 1) * (this->param + 1) + j * (this->param + 1) + k;
     }
-
-    const double dt = 0.001; // simulation timestep
-    const double kElastic = 500; // Hook's elasticity coefficient for all springs except collision springs
-    const double dElastic = 0.25; // Damping coefficient for all springs except collision springs
-    const double kCollision = 10000; // Hook's elasticity coefficient for collision springs
-    const double dCollision = 0.25; // Damping coefficient collision springs
-    const double mass = 0.01; // mass of each node (equal for all nodes)
-    const glm::vec<3, double> gravity = glm::vec<3, double>(0, -100, 0); // gravity
 };
 
 #endif // JELLOCUBE_H

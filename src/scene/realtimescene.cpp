@@ -10,6 +10,7 @@ std::unordered_map<std::string, QImage> fileToTexture;
 RealtimeScene::RealtimeScene() {
     this->scenefile = "";
     this->camera = Camera();
+    this->camera.updatePlanes(settings.nearPlane, settings.farPlane);
 }
 
 void RealtimeScene::initScene(GLuint shadowMapShader) {
@@ -25,9 +26,9 @@ void RealtimeScene::initScene(GLuint shadowMapShader) {
     }
 
     RenderShapeData& shapeData = renderData.shapes[0];
-    bounds = 4;
+    settings.bounds = 4;
     std::unique_ptr<Primitive> boundingBox = std::make_unique<Cube>(
-        glm::scale(shapeData.ctm, glm::vec3(2 * bounds)),
+        glm::scale(shapeData.ctm, glm::vec3(2 * settings.bounds)),
         shapeData.primitive.material,
         8, true
     );
@@ -36,7 +37,7 @@ void RealtimeScene::initScene(GLuint shadowMapShader) {
 
     SceneMaterial jelloMaterial = {
         .cAmbient = glm::vec4(0.2, 0.8, 0.2, 1),
-        .cDiffuse = glm::vec4(0.2, 0.8, 0.2, 0.5),
+        .cDiffuse = glm::vec4(0.2, 0.8, 0.2, settings.transparentCube ? 0.5 : 1),
         .cSpecular = glm::vec4(0.2, 0.8, 0.2, 1),
         .shininess = 10
     };
@@ -51,6 +52,19 @@ void RealtimeScene::initScene(GLuint shadowMapShader) {
     for(int i = 0; i < renderData.lights.size(); i++) {
         this->lights.push_back(Light(renderData.lights[i], this->primitives, shadowMapShader, i+1));
     }
+}
+
+void RealtimeScene::resetScene() {
+    this->primitives.erase(this->primitives.begin() + 1, this->primitives.end()); // erase all primitives except bounding box
+    SceneMaterial jelloMaterial = {
+        .cAmbient = glm::vec4(0.2, 0.8, 0.2, 1),
+        .cDiffuse = glm::vec4(0.2, 0.8, 0.2, settings.transparentCube ? 0.5 : 1),
+        .cSpecular = glm::vec4(0.2, 0.8, 0.2, 1),
+        .shininess = 10
+    };
+    std::unique_ptr<Primitive> jelloCube = std::make_unique<JelloCube>(jelloMaterial, 8, glm::vec3(0, 0, 0));
+    jelloCube->initialize();
+    this->primitives.push_back(std::move(jelloCube));
 }
 
 void RealtimeScene::updateScene() {
@@ -135,44 +149,44 @@ Light::Light(const SceneLightData& lightData,
              std::vector<std::unique_ptr<Primitive>>& primitives,
              GLuint shadowMapShader, int textureInd) : lightCamera(lightData, primitives) {
     this->lightData = lightData;
-    int viewWidth = round(this->RESOLUTION * this->lightCamera.getAspectRatio());
-    int viewHeight = this->RESOLUTION;
+    // int viewWidth = round(this->RESOLUTION * this->lightCamera.getAspectRatio());
+    // int viewHeight = this->RESOLUTION;
 
     // Generate shadow map
-    glErrorCheck(glGenTextures(1, &this->shadowMap));
+    // glErrorCheck(glGenTextures(1, &this->shadowMap));
 
-    glErrorCheck(glActiveTexture(GL_TEXTURE0 + textureInd));
-    glErrorCheck(glBindTexture(GL_TEXTURE_2D, this->shadowMap));
-    glErrorCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, viewWidth, viewHeight, 0,
-                              GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
-    glErrorCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    glErrorCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    glErrorCheck(glBindTexture(GL_TEXTURE_2D, 0));
+    // glErrorCheck(glActiveTexture(GL_TEXTURE0 + textureInd));
+    // glErrorCheck(glBindTexture(GL_TEXTURE_2D, this->shadowMap));
+    // glErrorCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, viewWidth, viewHeight, 0,
+    //                           GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
+    // glErrorCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    // glErrorCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    // glErrorCheck(glBindTexture(GL_TEXTURE_2D, 0));
 
-    // Generate and bind FBO
-    glErrorCheck(glGenFramebuffers(1, &this->shadowFBO));
-    glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFBO));
+    // // Generate and bind FBO
+    // glErrorCheck(glGenFramebuffers(1, &this->shadowFBO));
+    // glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFBO));
 
-    // Add texture as a depth attachment to FBO
-    glErrorCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, this->shadowMap, 0));
-    glErrorCheck(glDrawBuffer(GL_NONE));
-    glErrorCheck(glReadBuffer(GL_NONE));
+    // // Add texture as a depth attachment to FBO
+    // glErrorCheck(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, this->shadowMap, 0));
+    // glErrorCheck(glDrawBuffer(GL_NONE));
+    // glErrorCheck(glReadBuffer(GL_NONE));
 
-    // Render scene from light's POV as camera to FBO
-    // Clear screen color and depth and adjust viewport before rendering
-    glErrorCheck(glViewport(0, 0, viewWidth, viewHeight));
-    glErrorCheck(glClear(GL_DEPTH_BUFFER_BIT));
+    // // Render scene from light's POV as camera to FBO
+    // // Clear screen color and depth and adjust viewport before rendering
+    // glErrorCheck(glViewport(0, 0, viewWidth, viewHeight));
+    // glErrorCheck(glClear(GL_DEPTH_BUFFER_BIT));
 
-    // Activate shader program
-    glErrorCheck(glUseProgram(shadowMapShader));
+    // // Activate shader program
+    // glErrorCheck(glUseProgram(shadowMapShader));
 
-    glErrorCheck(glUniformMatrix4fv(glGetUniformLocation(shadowMapShader, "lightSpaceMat"), 1, false, &this->lightCamera.lightSpaceMatrix[0][0]));
-    for(const std::unique_ptr<Primitive>& primitive : primitives)
-        primitive->draw(shadowMapShader, true);
+    // glErrorCheck(glUniformMatrix4fv(glGetUniformLocation(shadowMapShader, "lightSpaceMat"), 1, false, &this->lightCamera.lightSpaceMatrix[0][0]));
+    // for(const std::unique_ptr<Primitive>& primitive : primitives)
+    //     primitive->draw(shadowMapShader, true);
 
-    // Deactivate shader program
-    glErrorCheck(glUseProgram(0));
+    // // Deactivate shader program
+    // glErrorCheck(glUseProgram(0));
 
-    // Unbind the FBO
-    glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    // // Unbind the FBO
+    // glErrorCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
