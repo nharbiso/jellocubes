@@ -151,8 +151,8 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
         // Use deltaX and deltaY here to rotate
         Camera& camera = this->scene.getCamera();
-        camera.rotateCamera(glm::vec4(0, 1, 0, 0), M_PI * deltaX / 1000);
-        camera.rotateCamera(camera.getRight(), M_PI * deltaY / 1000);
+        camera.rotateCamera(glm::vec4(0, 1, 0, 0), M_PI * deltaX / 1000, false);
+        camera.rotateCamera(camera.getRight(), M_PI * deltaY / 1000, false);
 
         update(); // asks for a PaintGL() call to occur
     }
@@ -172,18 +172,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
     }
     if(m_keyMap[Qt::Key_S]) {
         oldPos += -camera.getLook() * speed * deltaTime;
-    }
-    if(m_keyMap[Qt::Key_A]) {
-        oldPos += -camera.getRight() * speed * deltaTime;
-    }
-    if(m_keyMap[Qt::Key_D]) {
-        oldPos += camera.getRight() * speed * deltaTime;
-    }
-    if(m_keyMap[Qt::Key_Space]) {
-        oldPos += glm::vec4(0, 1, 0, 0) * speed * deltaTime;
-    }
-    if(m_keyMap[Qt::Key_Control]) {
-        oldPos += glm::vec4(0, -1, 0, 0) * speed * deltaTime;
     }
     camera.updatePos(oldPos);
 

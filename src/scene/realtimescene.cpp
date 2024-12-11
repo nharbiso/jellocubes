@@ -88,7 +88,7 @@ float RealtimeScene::randFloat(float min, float max) {
 void RealtimeScene::addObstacle() {
     glm::vec3 rotAxis(randFloat(-1, 1), randFloat(-1, 1), randFloat(-1, 1));
     float angle = randFloat(0, 2 * M_PI);
-    glm::vec3 scale(randFloat(0, (float)settings.bounds), randFloat(0, (float)settings.bounds), randFloat(0, (float)settings.bounds));
+    glm::vec3 scale(randFloat(0.5, (float)settings.bounds), randFloat(0.5, (float)settings.bounds), randFloat(0.5, (float)settings.bounds));
     // limit translation to within bounding box
     float maxTranslate = settings.bounds - glm::length(0.5f * scale);
     glm::vec3 translate(randFloat(-maxTranslate, maxTranslate), randFloat(-maxTranslate, maxTranslate), randFloat(-maxTranslate, maxTranslate));

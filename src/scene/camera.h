@@ -19,7 +19,7 @@ public:
     const void updatePos(glm::vec4 pos);
 
     // Rotates the camera around the given axis CCW by the given angle in radians
-    const void rotateCamera(glm::vec4 axis, float angle);
+    const void rotateCamera(glm::vec4 axis, float angle, bool rotateLook);
 
     // Returns the view matrix for the current camera settings.
     const glm::mat4& getViewMatrix() const;

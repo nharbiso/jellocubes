@@ -60,7 +60,7 @@ private:
         .shininess = 30,
         .textureMap = SceneFileMap{
             .isUsed = true,
-            .filename = "textures/liqmtl.png",
+            .filename = "textures/blackrock.jpg",
             .repeatU = 1,
             .repeatV = 1,
         },

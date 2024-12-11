@@ -48,7 +48,8 @@ const void Camera::updatePos(glm::vec4 pos) {
     }
 }
 
-const void Camera::rotateCamera(glm::vec4 axis, float angle) {
+const void Camera::rotateCamera(glm::vec4 axis, float angle, bool rotateLook) {
+    angle *= rotateLook ? 1 : -1;
     glm::vec4 u = normalize(axis);
     float cosTheta = cos(angle);
     float sinTheta = sin(angle);
@@ -58,8 +59,13 @@ const void Camera::rotateCamera(glm::vec4 axis, float angle) {
         u.x * u.z * (1 - cosTheta) + u.y * sinTheta, u.y * u.z * (1 - cosTheta) - u.x * sinTheta, cosTheta + u.z * u.z * (1 - cosTheta), 0,
         0, 0, 0, 1
     );
-    this->look = rotMatrix * this->look;
-    this->up = rotMatrix * this->up;
+    if(rotateLook) {
+        this->look = rotMatrix * this->look;
+        this->up = rotMatrix * this->up;
+    } else {
+        this->pos = rotMatrix * this->pos;
+        this->look = glm::normalize(-this->pos);
+    }
     this->right = glm::vec4(normalize(cross(glm::vec3(this->look), glm::vec3(this->up))), 0);
     calcViewMat();
 }

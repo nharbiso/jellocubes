@@ -164,5 +164,11 @@ const void Sphere::calcVertexData() {
 }
 
 const std::optional<glm::vec3> Sphere::findIntersectionPoint(glm::vec3 point) {
+    glm::vec3 objSpacePoint = this->worldToObject * glm::vec4(point, 1);
+    if(glm::length(objSpacePoint) <= 0.5) {
+        // point is inside sphere
+        glm::vec4 interPoint = glm::vec4(glm::normalize(objSpacePoint) * 0.5f, 1);
+        return this->objectToWorld * interPoint;
+    }
     return std::nullopt;
 }
