@@ -1,5 +1,6 @@
 #include "jellocube.h"
 #include "settings.h"
+#include <omp.h>
 
 JelloCube::JelloCube(const SceneMaterial& material, int param, glm::vec<3, double> center) : Cube(glm::mat4(1), material, param, false) {
     this->restLen = 1.0f / param;
@@ -11,6 +12,11 @@ JelloCube::JelloCube(const SceneMaterial& material, int param, glm::vec<3, doubl
             }
         }
     }
+
+    std::random_device rd;
+    this->gen = std::mt19937(rd());
+    this->sideDis = std::uniform_real_distribution<double>(-20.0, 20.0);
+    this->upDis = std::uniform_real_distribution<double>(0, 20.0);
 }
 
 glm::vec<3, double> JelloCube::getStructuralForce(int i, int j, int k) {
@@ -163,6 +169,7 @@ glm::vec<3, double> JelloCube::getBendForce(int i, int j, int k) {
     return force;
 }
 
+bool hitBottom = false;
 glm::vec<3, double> JelloCube::getCollisionForce(int i, int j, int k) {
     glm::vec<3, double> force(0);
     glm::vec<3, double> pos = this->nodes[getInd(i, j, k)];
@@ -170,39 +177,34 @@ glm::vec<3, double> JelloCube::getCollisionForce(int i, int j, int k) {
     glm::vec<3, double> boxVel = glm::vec<3, double>(0);
     if(pos.x > settings.bounds) {
         glm::vec<3, double> collisionPoint(settings.bounds, pos.y, pos.z);
-        double diff = pos.x - settings.bounds;
-        force += this->hooksForce(pos, collisionPoint, settings.kCollision * diff, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision * diff);
+        force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
+        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
     }
     if(pos.x < -settings.bounds) {
         glm::vec<3, double> collisionPoint(-settings.bounds, pos.y, pos.z);
-        double diff = -(pos.x + settings.bounds);
-        force += this->hooksForce(pos, collisionPoint, settings.kCollision * diff, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision * diff);
+        force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
+        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
     }
     if(pos.y > settings.bounds) {
         glm::vec<3, double> collisionPoint(pos.x, settings.bounds, pos.z);
-        double diff = pos.y - settings.bounds;
-        force += this->hooksForce(pos, collisionPoint, settings.kCollision * diff, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision * diff);
+        force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
+        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
     }
     if(pos.y < -settings.bounds) {
+        // hitBottom = true;
         glm::vec<3, double> collisionPoint(pos.x, -settings.bounds, pos.z);
-        double diff = -(pos.y + settings.bounds);
-        force += this->hooksForce(pos, collisionPoint, settings.kCollision * diff, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision * diff);
+        force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
+        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
     }
     if(pos.z > settings.bounds) {
         glm::vec<3, double> collisionPoint(pos.x, pos.y, settings.bounds);
-        double diff = pos.z - settings.bounds;
-        force += this->hooksForce(pos, collisionPoint, settings.kCollision * diff, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision * diff);
+        force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
+        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
     }
     if(pos.z < -settings.bounds) {
         glm::vec<3, double> collisionPoint(pos.x, pos.y, -settings.bounds);
-        double diff = -(pos.z + settings.bounds);
-        force += this->hooksForce(pos, collisionPoint, settings.kCollision * diff, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision * diff);
+        force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
+        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
     }
     return force;
 }
@@ -211,6 +213,7 @@ glm::vec<3, double> JelloCube::getCollisionForce(int i, int j, int k) {
 void JelloCube::computeAcceleration(std::vector<glm::vec<3, double>>& positions,
                                     std::vector<glm::vec<3, double>>& velocities,
                                     std::vector<glm::vec<3, double>>& acc) {
+    #pragma omp parallel for collapse(3)
     for(int i = 0; i <= this->param; i++) {
         for(int j = 0; j <= this->param; j++) {
             for(int k = 0; k <= this->param; k++) {
@@ -219,9 +222,11 @@ void JelloCube::computeAcceleration(std::vector<glm::vec<3, double>>& positions,
                 acc[ind] += this->getStructuralForce(i, j, k);
                 acc[ind] += this->getShearForce(i, j, k);
                 acc[ind] += this->getBendForce(i, j, k);
+                if(hitBottom)
+                    std::cout << glm::to_string(this->getBendForce(i, j, k)) << std::endl;
                 acc[ind] += this->getCollisionForce(i, j, k);
-                acc[ind] /= settings.mass;
                 acc[ind] += glm::vec<3, double>(0, -settings.gravity, 0);
+                acc[ind] /= settings.mass;
             }
         }
     }
@@ -241,6 +246,7 @@ void JelloCube::update() {
     double dt = settings.dt / 1000.0;
     if(settings.integrator == Integrator::EULER) {
         this->computeAcceleration(this->nodes, this->velocities, acc);
+        #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param; i++) {
             for(int j = 0; j <= this->param; j++) {
                 for(int k = 0; k <= this->param; k++) {
@@ -252,6 +258,7 @@ void JelloCube::update() {
         }
     } else if(settings.integrator == Integrator::RK4) {
         this->computeAcceleration(this->nodes, this->velocities, acc);
+        #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param; i++) {
             for(int j = 0; j <= this->param; j++) {
                 for(int k = 0; k <= this->param; k++) {
@@ -266,6 +273,7 @@ void JelloCube::update() {
         }
 
         this->computeAcceleration(this->nodes, this->velocities, acc);
+        #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param; i++) {
             for(int j = 0; j <= this->param; j++) {
                 for(int k = 0; k <= this->param; k++) {
@@ -280,6 +288,7 @@ void JelloCube::update() {
         }
 
         this->computeAcceleration(this->nodes, this->velocities, acc);
+        #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param; i++) {
             for(int j = 0; j <= this->param; j++) {
                 for(int k = 0; k <= this->param; k++) {
@@ -294,6 +303,7 @@ void JelloCube::update() {
         }
 
         this->computeAcceleration(this->nodes, this->velocities, acc);
+        #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param; i++) {
             for(int j = 0; j <= this->param; j++) {
                 for(int k = 0; k <= this->param; k++) {
@@ -314,6 +324,13 @@ void JelloCube::update() {
     glErrorCheck(glBindBuffer(GL_ARRAY_BUFFER, this->vbo));
     glErrorCheck(glBufferData(GL_ARRAY_BUFFER, sizeof(GLdouble) * this->vertexData.size(), this->vertexData.data(), GL_STATIC_DRAW));
     glErrorCheck(glBindBuffer(GL_ARRAY_BUFFER, 0));
+}
+
+void JelloCube::scatter() {
+    glm::vec<3, double> velChange(this->sideDis(this->gen), this->upDis(this->gen), this->sideDis(this->gen));
+    for(glm::vec<3, double>& vel : this->velocities) {
+        vel += velChange;
+    }
 }
 
 

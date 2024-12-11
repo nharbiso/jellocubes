@@ -51,6 +51,7 @@ public:
     std::vector<std::unique_ptr<Primitive>>& getPrimitives();
 
     void updateScene();
+    void scatterCube();
 
     // The getter of the shared pointer to the camera instance of the scene
     Camera& getCamera();

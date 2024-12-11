@@ -122,6 +122,8 @@ void Realtime::resetScene() {
 void Realtime::scatterCube() {
     this->makeCurrent();
 
+    this->scene.scatterCube();
+
     update(); // asks for a PaintGL() call to occur
 }
 

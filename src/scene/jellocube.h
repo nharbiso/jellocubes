@@ -2,10 +2,23 @@
 #define JELLOCUBE_H
 
 #include "primitives.h"
+#include <random>
 
 class JelloCube : public Cube {
 public:
     JelloCube(const SceneMaterial& material, int param, glm::vec<3, double> center);
+
+    void update();
+    void scatter();
+
+    const void calcVertexData() override;
+private:
+    double restLen; // resting length between two adjacent nodes
+    std::vector<glm::vec<3, double>> nodes; // contains param^3 nodes, which internally interact
+    std::vector<glm::vec<3, double>> velocities; // velocities of each node
+    inline int getInd(int i, int j, int k) {
+        return i * (this->param + 1) * (this->param + 1) + j * (this->param + 1) + k;
+    }
 
     // Computes hooks force on node1, due to spring between node1 and node2 (given by their indices)
     inline glm::vec<3, double> hooksForce(int ind1, int ind2, double k, double restLen) {
@@ -33,17 +46,14 @@ public:
     glm::vec<3, double> getShearForce(int i, int j, int k);
     glm::vec<3, double> getBendForce(int i, int j, int k);
     glm::vec<3, double> getCollisionForce(int i, int j, int k);
-    void computeAcceleration(std::vector<glm::vec<3, double>>& nodes, std::vector<glm::vec<3, double>>& velocities, std::vector<glm::vec<3, double>>& acc);
-    void update();
+    void computeAcceleration(std::vector<glm::vec<3, double>>& nodes,
+                             std::vector<glm::vec<3, double>>& velocities,
+                             std::vector<glm::vec<3, double>>& acc);
 
-    const void calcVertexData() override;
-private:
-    double restLen; // resting length between two adjacent nodes
-    std::vector<glm::vec<3, double>> nodes; // contains param^3 nodes, which internally interact
-    std::vector<glm::vec<3, double>> velocities; // velocities of each node
-    inline int getInd(int i, int j, int k) {
-        return i * (this->param + 1) * (this->param + 1) + j * (this->param + 1) + k;
-    }
+    // For scattering
+    std::mt19937 gen;
+    std::uniform_real_distribution<double> sideDis;
+    std::uniform_real_distribution<double> upDis;
 };
 
 #endif // JELLOCUBE_H

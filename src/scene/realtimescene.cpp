@@ -69,8 +69,17 @@ void RealtimeScene::resetScene() {
 
 void RealtimeScene::updateScene() {
     for(int i = 1; i < this->primitives.size(); i++) {
-        JelloCube* jelloCube = static_cast<JelloCube*>(this->primitives[i].get());
-        jelloCube->update();
+        if (JelloCube* jelloCube = dynamic_cast<JelloCube*>(this->primitives[i].get())) {
+            jelloCube->update();
+        }
+    }
+}
+
+void RealtimeScene::scatterCube() {
+    for(int i = 1; i < this->primitives.size(); i++) {
+        if (JelloCube* jelloCube = dynamic_cast<JelloCube*>(this->primitives[i].get())) {
+            jelloCube->scatter();
+        }
     }
 }
 
