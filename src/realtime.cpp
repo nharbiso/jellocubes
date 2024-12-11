@@ -31,7 +31,6 @@ void Realtime::finish() {
 
     // Students: anything requiring OpenGL calls when the program exits should be done here
     glErrorCheck(glDeleteProgram(this->phongShader));
-    glErrorCheck(glDeleteProgram(this->shadowMapShader));
     this->scene.free();
 
     this->doneCurrent();
@@ -73,10 +72,7 @@ void Realtime::initializeGL() {
     glErrorCheck(glUniform1i(glGetUniformLocation(this->phongShader, "texture"), 0));
     glErrorCheck(glUseProgram(0));
 
-    this->shadowMapShader = ShaderLoader::createShaderProgram("resources/shaders/shadowmap.vert", "resources/shaders/shadowmap.frag");
-    glErrorCheck();
-
-    scene.initScene(this->shadowMapShader);
+    scene.initScene();
 }
 
 void Realtime::paintGL() {
@@ -92,10 +88,9 @@ void Realtime::paintGL() {
 
     this->scene.bindSceneUniforms(this->phongShader);
     glErrorCheck(glUniform1i(glGetUniformLocation(this->phongShader, "textureMapEnabled"), settings.textureMappingEnabled));
-    glErrorCheck(glUniform1i(glGetUniformLocation(this->phongShader, "shadowMapEnabled"), false));
 
     for(const std::unique_ptr<Primitive>& primitive : this->scene.getPrimitives())
-        primitive->draw(this->phongShader, false);
+        primitive->draw(this->phongShader);
 
     // Deactivate shader program
     glErrorCheck(glUseProgram(0));
@@ -113,17 +108,13 @@ void Realtime::resizeGL(int w, int h) {
 
 void Realtime::resetScene() {
     this->makeCurrent();
-
     this->scene.resetScene();
-
     update(); // asks for a PaintGL() call to occur
 }
 
-void Realtime::scatterCube() {
+void Realtime::addObstacle() {
     this->makeCurrent();
-
-    this->scene.scatterCube();
-
+    this->scene.addObstacle();
     update(); // asks for a PaintGL() call to occur
 }
 

@@ -31,6 +31,15 @@
         }
       ]
     },
+	{
+      "lights": [
+        {
+          "type": "directional",
+          "color": [0.4, 0.4, 0.4],
+          "direction": [0, 1.0, 0]
+        }
+      ]
+    },
     {
       "groups": [
         {

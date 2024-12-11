@@ -3,12 +3,13 @@
 
 #include "primitives.h"
 #include <random>
+#include <span>
 
 class JelloCube : public Cube {
 public:
     JelloCube(const SceneMaterial& material, int param, glm::vec<3, double> center);
 
-    void update();
+    void update(std::span<std::unique_ptr<Primitive>>& primitives);
     void scatter();
 
     const void calcVertexData() override;
@@ -17,7 +18,7 @@ private:
     std::vector<glm::vec<3, double>> nodes; // contains param^3 nodes, which internally interact
     std::vector<glm::vec<3, double>> velocities; // velocities of each node
     inline int getInd(int i, int j, int k) {
-        return i * (this->param + 1) * (this->param + 1) + j * (this->param + 1) + k;
+        return i * (this->param1 + 1) * (this->param1 + 1) + j * (this->param1 + 1) + k;
     }
 
     // Computes hooks force on node1, due to spring between node1 and node2 (given by their indices)
@@ -45,15 +46,13 @@ private:
     glm::vec<3, double> getStructuralForce(int i, int j, int k);
     glm::vec<3, double> getShearForce(int i, int j, int k);
     glm::vec<3, double> getBendForce(int i, int j, int k);
-    glm::vec<3, double> getCollisionForce(int i, int j, int k);
+    glm::vec<3, double> getCollisionForce(int i, int j, int k, std::span<std::unique_ptr<Primitive>>& primitives);
     void computeAcceleration(std::vector<glm::vec<3, double>>& nodes,
                              std::vector<glm::vec<3, double>>& velocities,
-                             std::vector<glm::vec<3, double>>& acc);
+                             std::vector<glm::vec<3, double>>& acc,
+                             std::span<std::unique_ptr<Primitive>>& primitives);
 
-    // For scattering
-    std::mt19937 gen;
-    std::uniform_real_distribution<double> sideDis;
-    std::uniform_real_distribution<double> upDis;
+    std::mt19937 gen; // For scattering
 };
 
 #endif // JELLOCUBE_H

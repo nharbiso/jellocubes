@@ -31,9 +31,16 @@ void MainWindow::initialize() {
     QPushButton* scatter = new QPushButton();
     scatter->setText(QStringLiteral("Scatter cube"));
     connect(scatter, &QPushButton::clicked, this, [scatter, this]() {
-        this->realtime->scatterCube();
+        this->realtime->scene.scatterCube();
     });
     vLayout->addWidget(scatter);
+
+    QPushButton* add = new QPushButton();
+    add->setText(QStringLiteral("Add obstacle"));
+    connect(add, &QPushButton::clicked, this, [add, this]() {
+        this->realtime->addObstacle();
+    });
+    vLayout->addWidget(add);
 
     // Add simulation parameters
     QFont font;
@@ -46,9 +53,9 @@ void MainWindow::initialize() {
 
     this->addSlider(vLayout, "Time step (ms)", 0.1, 10, 0.1, settings.dt, 10, &settings.dt);
     this->addSlider(vLayout, "Hook's constant (cube)", 0, 10000, 1, settings.kElastic, 1, &settings.kElastic);
-    this->addSlider(vLayout, "Damping constant (cube)", 0.1, 10, 0.05, settings.dElastic, 20, &settings.dElastic);
+    this->addSlider(vLayout, "Damping constant (cube)", 0.1, 20, 0.05, settings.dElastic, 20, &settings.dElastic);
     this->addSlider(vLayout, "Hook's constant (bounds)", 100, 10000, 50, settings.kCollision, 1, &settings.kCollision);
-    this->addSlider(vLayout, "Damping constant (bounds)", 0.1, 10, 0.05, settings.dCollision, 20, &settings.dCollision);
+    this->addSlider(vLayout, "Damping constant (bounds)", 0.1, 20, 0.05, settings.dCollision, 20, &settings.dCollision);
     this->addSlider(vLayout, "Node mass", 0.01, 100, 0.01, settings.mass, 100, &settings.mass);
     this->addSlider(vLayout, "Gravity", 0, 3, 0.1, settings.gravity, 100, &settings.gravity);
 

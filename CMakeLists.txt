@@ -75,8 +75,6 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
     FILES
         resources/shaders/phong.frag
         resources/shaders/phong.vert
-        resources/shaders/shadowmap.frag
-        resources/shaders/shadowmap.vert
 )
 
 # GLEW: this provides support for Windows (including 64-bit)

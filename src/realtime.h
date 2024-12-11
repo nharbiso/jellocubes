@@ -23,8 +23,9 @@ public:
     void finish();                                      // Called on program exit
 
     void resetScene();
-    void scatterCube();
+    void addObstacle();
 
+    RealtimeScene scene;
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
 
@@ -56,7 +57,5 @@ private:
     int screenHeight;
 
     // Stores any scene-related data
-    RealtimeScene scene;
     GLuint phongShader;
-    GLuint shadowMapShader;
 };

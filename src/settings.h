@@ -13,7 +13,7 @@ struct Settings {
     int bounds = 4;
     double dt = 1; // simulation timestep (ms)
     double kElastic = 500; // Hook's elasticity coefficient for all springs except collision springs
-    double dElastic = 0.25; // Dampening coefficient for all springs except collision springs
+    double dElastic = 0.40; // Dampening coefficient for all springs except collision springs
     double kCollision = 1000; // Hook's elasticity coefficient for collision springs
     double dCollision = 10; // Dampening coefficient collision springs
     double mass = 0.01; // mass of each node (equal for all nodes)

@@ -36,13 +36,9 @@ struct LightData {
 
     float penumbra;
     float angle;
-
-    sampler2D shadowMap;
-    mat4 lightSpaceMat;
 };
 uniform LightData lights[8];
 uniform int numLights;
-uniform bool shadowMapEnabled;
 
 uniform vec4 cameraPos;
 
@@ -55,16 +51,6 @@ void main() {
     fragColor += ka * materialAmbient;
 
     for(int i = 0; i < numLights; i++) {
-        if(shadowMapEnabled && lights[i].type == LIGHT_SPOT) {
-            vec4 lightSpacePos = lights[i].lightSpaceMat * worldPos;
-            vec3 projPos = lightSpacePos.xyz / lightSpacePos.w;
-            projPos = projPos * 0.5 + 0.5; // normalize from [-1, 1] to [0, 1]
-            float shadowMapDepth = texture(lights[i].shadowMap, projPos.xy).x;
-            if(projPos.z > shadowMapDepth) {
-                continue; // projection depth greater, therefore in shadow
-            }
-        }
-
         vec4 posToLight;
         float f_att = 1; // attenuation
         // Calculate attenuation and falloff (latter is for spot light)

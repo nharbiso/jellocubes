@@ -8,12 +8,13 @@ void insertVec(std::vector<GLfloat>& data, glm::vec<dim, float, glm::defaultp> d
         data.push_back(dataPoint[i]);
 }
 
-void Cube::makeTile(std::vector<glm::vec3>& vertices,
-                    std::vector<glm::vec3>& normals,
-                    std::vector<glm::vec2>& uvs) {
+void TessellatedPrimitive::makeTile(std::vector<glm::vec3>& vertices,
+                                    std::vector<glm::vec3>& normals,
+                                    std::vector<glm::vec2>& uvs,
+                                    bool inverted) {
     const int numVerts = 6;
     std::vector<int> vertInds = {0, 2, 3, 0, 3, 1};
-    if(this->inverted) {
+    if(inverted) {
         vertInds = {3, 2, 0, 1, 3, 0};
     }
     for(int ind : vertInds) {
@@ -27,10 +28,10 @@ void Cube::makeTile(std::vector<glm::vec3>& vertices,
 const void Cube::makeFace(glm::vec3 topLeft, glm::vec3 topRight,
                           glm::vec3 bottomLeft, glm::vec3 bottomRight,
                           getNormalFunc getNormal, getUVCartFunc getUV) {
-    glm::vec3 tileWidth = (topRight - topLeft) / (float) this->param;
-    glm::vec3 tileHeight = (bottomLeft - topLeft) / (float) this->param;
-    for(int i = 0; i < this->param; i++) {
-        for(int j = 0; j < this->param; j++) {
+    glm::vec3 tileWidth = (topRight - topLeft) / (float) this->param1;
+    glm::vec3 tileHeight = (bottomLeft - topLeft) / (float) this->param1;
+    for(int i = 0; i < this->param1; i++) {
+        for(int j = 0; j < this->param1; j++) {
             glm::vec3 tileTopLeft = topLeft + (float) i * tileWidth + (float) j * tileHeight;
             std::vector<glm::vec3> vertices = {
                 tileTopLeft,
@@ -42,7 +43,7 @@ const void Cube::makeFace(glm::vec3 topLeft, glm::vec3 topRight,
             std::transform(vertices.begin(), vertices.end(), normals.begin(), getNormal);
             std::vector<glm::vec2> uvs(vertices.size());
             std::transform(vertices.begin(), vertices.end(), uvs.begin(), getUV);
-            this->makeTile(vertices, normals, uvs);
+            this->makeTile(vertices, normals, uvs, this->inverted);
         }
     }
 }
@@ -96,4 +97,36 @@ const void Cube::calcVertexData() {
              glm::vec3(-this->boundCoord, -this->boundCoord, -this->boundCoord),
              [this](glm::vec3 pos) -> glm::vec3 { return glm::vec3(0, 0, -1 * (this->inverted ? -1 : 1)); },
              [](glm::vec3 pos) -> glm::vec2 { return glm::vec2(0.5 - pos.x, pos.y + 0.5); });
+}
+
+const std::optional<glm::vec3> Cube::findIntersectionPoint(glm::vec3 point) {
+    glm::vec4 objSpacePoint = this->worldToObject * glm::vec4(point, 1);
+    if(-0.5 <= objSpacePoint.x && objSpacePoint.x <= 0.5 &&
+       -0.5 <= objSpacePoint.y && objSpacePoint.y <= 0.5 &&
+        -0.5 <= objSpacePoint.z && objSpacePoint.z <= 0.5) {
+        // point is inside cube
+        glm::vec4 interPoint(-0.5, objSpacePoint.y, objSpacePoint.z, 1);
+        float minDist = objSpacePoint.x + 0.5;
+        if(0.5 - objSpacePoint.x < minDist) {
+            interPoint = glm::vec4(0.5, objSpacePoint.y, objSpacePoint.z, 1);
+            minDist = 0.5 - objSpacePoint.x;
+        }
+        if(objSpacePoint.y + 0.5 < minDist) {
+            interPoint = glm::vec4(objSpacePoint.x, -0.5, objSpacePoint.z, 1);
+            minDist = objSpacePoint.y + 0.5;
+        }
+        if(0.5 - objSpacePoint.y < minDist) {
+            interPoint = glm::vec4(objSpacePoint.x, 0.5, objSpacePoint.z, 1);
+            minDist = 0.5 - objSpacePoint.y;
+        }
+        if(objSpacePoint.z + 0.5 < minDist) {
+            interPoint = glm::vec4(objSpacePoint.x, objSpacePoint.y, -0.5, 1);
+            minDist = objSpacePoint.z + 0.5;
+        }
+        if(0.5 - objSpacePoint.z < minDist) {
+            interPoint = glm::vec4(objSpacePoint.x, objSpacePoint.y, 0.5, 1);
+        }
+        return this->objectToWorld * interPoint;
+    }
+    return std::nullopt;
 }

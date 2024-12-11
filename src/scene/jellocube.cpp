@@ -15,8 +15,6 @@ JelloCube::JelloCube(const SceneMaterial& material, int param, glm::vec<3, doubl
 
     std::random_device rd;
     this->gen = std::mt19937(rd());
-    this->sideDis = std::uniform_real_distribution<double>(-20.0, 20.0);
-    this->upDis = std::uniform_real_distribution<double>(0, 20.0);
 }
 
 glm::vec<3, double> JelloCube::getStructuralForce(int i, int j, int k) {
@@ -25,7 +23,7 @@ glm::vec<3, double> JelloCube::getStructuralForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j, k), settings.kElastic, this->restLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j, k), settings.dElastic);
     }
-    if(i < this->param) {
+    if(i < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j, k), settings.kElastic, this->restLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j, k), settings.dElastic);
     }
@@ -33,7 +31,7 @@ glm::vec<3, double> JelloCube::getStructuralForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j-1, k), settings.kElastic, this->restLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j-1, k), settings.dElastic);
     }
-    if(j < this->param) {
+    if(j < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j+1, k), settings.kElastic, this->restLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j+1, k), settings.dElastic);
     }
@@ -41,7 +39,7 @@ glm::vec<3, double> JelloCube::getStructuralForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j, k-1), settings.kElastic, this->restLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j, k-1), settings.dElastic);
     }
-    if(k < this->param) {
+    if(k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j, k+1), settings.kElastic, this->restLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j, k+1), settings.dElastic);
     }
@@ -56,15 +54,15 @@ glm::vec<3, double> JelloCube::getShearForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j-1, k-1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j-1, k-1), settings.dElastic);
     }
-    if(j > 0 && k < this->param) {
+    if(j > 0 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j-1, k+1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j-1, k+1), settings.dElastic);
     }
-    if(j < this->param && k > 0) {
+    if(j < this->param1 && k > 0) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j+1, k-1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j+1, k-1), settings.dElastic);
     }
-    if(j < this->param && k < this->param) {
+    if(j < this->param1 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j+1, k+1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j+1, k+1), settings.dElastic);
     }
@@ -73,15 +71,15 @@ glm::vec<3, double> JelloCube::getShearForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j, k-1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j, k-1), settings.dElastic);
     }
-    if(i > 0 && k < this->param) {
+    if(i > 0 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j, k+1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j, k+1), settings.dElastic);
     }
-    if(i < this->param && k > 0) {
+    if(i < this->param1 && k > 0) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j, k-1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j, k-1), settings.dElastic);
     }
-    if(i < this->param && k < this->param) {
+    if(i < this->param1 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j, k+1), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j, k+1), settings.dElastic);
     }
@@ -90,15 +88,15 @@ glm::vec<3, double> JelloCube::getShearForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j-1, k), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j-1, k), settings.dElastic);
     }
-    if(i > 0 && j < this->param) {
+    if(i > 0 && j < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j+1, k), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j+1, k), settings.dElastic);
     }
-    if(i < this->param && j > 0) {
+    if(i < this->param1 && j > 0) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j-1, k), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j-1, k), settings.dElastic);
     }
-    if(i < this->param && j < this->param) {
+    if(i < this->param1 && j < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j+1, k), settings.kElastic, axisDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j+1, k), settings.dElastic);
     }
@@ -108,31 +106,31 @@ glm::vec<3, double> JelloCube::getShearForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j-1, k-1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j-1, k-1), settings.dElastic);
     }
-    if(i > 0 && j > 0 && k < this->param) {
+    if(i > 0 && j > 0 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j-1, k+1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j-1, k+1), settings.dElastic);
     }
-    if(i > 0 && j < this->param && k > 0) {
+    if(i > 0 && j < this->param1 && k > 0) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j+1, k-1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j+1, k-1), settings.dElastic);
     }
-    if(i > 0 && j < this->param && k < this->param) {
+    if(i > 0 && j < this->param1 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-1, j+1, k+1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-1, j+1, k+1), settings.dElastic);
     }
-    if(i < this->param && j > 0 && k > 0) {
+    if(i < this->param1 && j > 0 && k > 0) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j-1, k-1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j-1, k-1), settings.dElastic);
     }
-    if(i < this->param && j > 0 && k < this->param) {
+    if(i < this->param1 && j > 0 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j-1, k+1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j-1, k+1), settings.dElastic);
     }
-    if(i < this->param && j < this->param && k > 0) {
+    if(i < this->param1 && j < this->param1 && k > 0) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j+1, k-1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j+1, k-1), settings.dElastic);
     }
-    if(i < this->param && j < this->param && k < this->param) {
+    if(i < this->param1 && j < this->param1 && k < this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+1, j+1, k+1), settings.kElastic, cornerDiagRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+1, j+1, k+1), settings.dElastic);
     }
@@ -146,7 +144,7 @@ glm::vec<3, double> JelloCube::getBendForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i-2, j, k), settings.kElastic, bendRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i-2, j, k), settings.dElastic);
     }
-    if(i+2 <= this->param) {
+    if(i+2 <= this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i+2, j, k), settings.kElastic, bendRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i+2, j, k), settings.dElastic);
     }
@@ -154,7 +152,7 @@ glm::vec<3, double> JelloCube::getBendForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j-2, k), settings.kElastic, bendRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j-2, k), settings.dElastic);
     }
-    if(j+2 <= this->param) {
+    if(j+2 <= this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j+2, k), settings.kElastic, bendRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j+2, k), settings.dElastic);
     }
@@ -162,49 +160,55 @@ glm::vec<3, double> JelloCube::getBendForce(int i, int j, int k) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j, k-2), settings.kElastic, bendRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j, k-2), settings.dElastic);
     }
-    if(k+2 <= this->param) {
+    if(k+2 <= this->param1) {
         force += this->hooksForce(getInd(i, j, k), getInd(i, j, k+2), settings.kElastic, bendRestLen);
         force += this->dampeningForce(getInd(i, j, k), getInd(i, j, k+2), settings.dElastic);
     }
     return force;
 }
 
-bool hitBottom = false;
-glm::vec<3, double> JelloCube::getCollisionForce(int i, int j, int k) {
+glm::vec<3, double> JelloCube::getCollisionForce(int i, int j, int k, std::span<std::unique_ptr<Primitive>>& primitives) {
     glm::vec<3, double> force(0);
     glm::vec<3, double> pos = this->nodes[getInd(i, j, k)];
     glm::vec<3, double> vel = this->velocities[getInd(i, j, k)];
-    glm::vec<3, double> boxVel = glm::vec<3, double>(0);
+    glm::vec<3, double> objVel = glm::vec<3, double>(0);
     if(pos.x > settings.bounds) {
         glm::vec<3, double> collisionPoint(settings.bounds, pos.y, pos.z);
         force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
+        force += this->dampeningForce(pos, collisionPoint, vel, objVel, settings.dCollision);
     }
     if(pos.x < -settings.bounds) {
         glm::vec<3, double> collisionPoint(-settings.bounds, pos.y, pos.z);
         force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
+        force += this->dampeningForce(pos, collisionPoint, vel, objVel, settings.dCollision);
     }
     if(pos.y > settings.bounds) {
         glm::vec<3, double> collisionPoint(pos.x, settings.bounds, pos.z);
         force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
+        force += this->dampeningForce(pos, collisionPoint, vel, objVel, settings.dCollision);
     }
     if(pos.y < -settings.bounds) {
-        // hitBottom = true;
         glm::vec<3, double> collisionPoint(pos.x, -settings.bounds, pos.z);
         force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
+        force += this->dampeningForce(pos, collisionPoint, vel, objVel, settings.dCollision);
     }
     if(pos.z > settings.bounds) {
         glm::vec<3, double> collisionPoint(pos.x, pos.y, settings.bounds);
         force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
+        force += this->dampeningForce(pos, collisionPoint, vel, objVel, settings.dCollision);
     }
     if(pos.z < -settings.bounds) {
         glm::vec<3, double> collisionPoint(pos.x, pos.y, -settings.bounds);
         force += this->hooksForce(pos, collisionPoint, settings.kCollision, 0);
-        force += this->dampeningForce(pos, collisionPoint, vel, boxVel, settings.dCollision);
+        force += this->dampeningForce(pos, collisionPoint, vel, objVel, settings.dCollision);
+    }
+    for(std::unique_ptr<Primitive>& primitive : primitives) {
+        std::optional<glm::vec3> interPoint = primitive->findIntersectionPoint(pos);
+        if(interPoint) {
+            glm::vec<3, double> doubleInterPoint(*interPoint);
+            force += this->hooksForce(pos, doubleInterPoint, settings.kCollision, 0);
+            force += this->dampeningForce(pos, doubleInterPoint, vel, objVel, settings.dCollision);
+        }
     }
     return force;
 }
@@ -212,20 +216,20 @@ glm::vec<3, double> JelloCube::getCollisionForce(int i, int j, int k) {
 // Computes the total acceleration for all nodes given their current positions/velocities
 void JelloCube::computeAcceleration(std::vector<glm::vec<3, double>>& positions,
                                     std::vector<glm::vec<3, double>>& velocities,
-                                    std::vector<glm::vec<3, double>>& acc) {
+                                    std::vector<glm::vec<3, double>>& acc,
+                                    std::span<std::unique_ptr<Primitive>>& primitives) {
     #pragma omp parallel for collapse(3)
-    for(int i = 0; i <= this->param; i++) {
-        for(int j = 0; j <= this->param; j++) {
-            for(int k = 0; k <= this->param; k++) {
+    for(int i = 0; i <= this->param1; i++) {
+        for(int j = 0; j <= this->param1; j++) {
+            for(int k = 0; k <= this->param1; k++) {
                 int ind = this->getInd(i, j, k);
                 acc[ind] = glm::vec<3, double>(0);
                 acc[ind] += this->getStructuralForce(i, j, k);
                 acc[ind] += this->getShearForce(i, j, k);
                 acc[ind] += this->getBendForce(i, j, k);
-                if(hitBottom)
-                    std::cout << glm::to_string(this->getBendForce(i, j, k)) << std::endl;
-                acc[ind] += this->getCollisionForce(i, j, k);
+                acc[ind] += this->getCollisionForce(i, j, k, primitives);
                 acc[ind] += glm::vec<3, double>(0, -settings.gravity, 0);
+
                 acc[ind] /= settings.mass;
             }
         }
@@ -233,7 +237,7 @@ void JelloCube::computeAcceleration(std::vector<glm::vec<3, double>>& positions,
 }
 
 // Updates the colors, as well as positions and velocities of the jello cube's nodes using RK4 integration
-void JelloCube::update() {
+void JelloCube::update(std::span<std::unique_ptr<Primitive>>& primitives) {
     this->material.cDiffuse.a = settings.transparentCube ? 0.5 : 1;
 
     std::vector<glm::vec<3, double>> tmpPos(this->nodes.size()), tmpVels(this->nodes.size());
@@ -245,11 +249,11 @@ void JelloCube::update() {
 
     double dt = settings.dt / 1000.0;
     if(settings.integrator == Integrator::EULER) {
-        this->computeAcceleration(this->nodes, this->velocities, acc);
+        this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
         #pragma omp parallel for collapse(3)
-        for(int i = 0; i <= this->param; i++) {
-            for(int j = 0; j <= this->param; j++) {
-                for(int k = 0; k <= this->param; k++) {
+        for(int i = 0; i <= this->param1; i++) {
+            for(int j = 0; j <= this->param1; j++) {
+                for(int k = 0; k <= this->param1; k++) {
                     int ind = getInd(i, j, k);
                     this->nodes[ind] += dt * this->velocities[ind];
                     this->velocities[ind] += dt * acc[ind];
@@ -257,11 +261,11 @@ void JelloCube::update() {
             }
         }
     } else if(settings.integrator == Integrator::RK4) {
-        this->computeAcceleration(this->nodes, this->velocities, acc);
+        this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
         #pragma omp parallel for collapse(3)
-        for(int i = 0; i <= this->param; i++) {
-            for(int j = 0; j <= this->param; j++) {
-                for(int k = 0; k <= this->param; k++) {
+        for(int i = 0; i <= this->param1; i++) {
+            for(int j = 0; j <= this->param1; j++) {
+                for(int k = 0; k <= this->param1; k++) {
                     int ind = getInd(i, j, k);
                     F1pos[ind] = this->velocities[ind] * dt;
                     F1vel[ind] = acc[ind] * dt;
@@ -272,11 +276,11 @@ void JelloCube::update() {
             }
         }
 
-        this->computeAcceleration(this->nodes, this->velocities, acc);
+        this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
         #pragma omp parallel for collapse(3)
-        for(int i = 0; i <= this->param; i++) {
-            for(int j = 0; j <= this->param; j++) {
-                for(int k = 0; k <= this->param; k++) {
+        for(int i = 0; i <= this->param1; i++) {
+            for(int j = 0; j <= this->param1; j++) {
+                for(int k = 0; k <= this->param1; k++) {
                     int ind = getInd(i, j, k);
                     F2pos[ind] = tmpVels[ind] * dt;
                     F2vel[ind] = acc[ind] * dt;
@@ -287,11 +291,11 @@ void JelloCube::update() {
             }
         }
 
-        this->computeAcceleration(this->nodes, this->velocities, acc);
+        this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
         #pragma omp parallel for collapse(3)
-        for(int i = 0; i <= this->param; i++) {
-            for(int j = 0; j <= this->param; j++) {
-                for(int k = 0; k <= this->param; k++) {
+        for(int i = 0; i <= this->param1; i++) {
+            for(int j = 0; j <= this->param1; j++) {
+                for(int k = 0; k <= this->param1; k++) {
                     int ind = getInd(i, j, k);
                     F3pos[ind] = tmpVels[ind] * dt;
                     F3vel[ind] = acc[ind] * dt;
@@ -302,11 +306,11 @@ void JelloCube::update() {
             }
         }
 
-        this->computeAcceleration(this->nodes, this->velocities, acc);
+        this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
         #pragma omp parallel for collapse(3)
-        for(int i = 0; i <= this->param; i++) {
-            for(int j = 0; j <= this->param; j++) {
-                for(int k = 0; k <= this->param; k++) {
+        for(int i = 0; i <= this->param1; i++) {
+            for(int j = 0; j <= this->param1; j++) {
+                for(int k = 0; k <= this->param1; k++) {
                     int ind = getInd(i, j, k);
                     F4pos[ind] = tmpVels[ind] * dt;
                     F4vel[ind] = acc[ind] * dt;
@@ -327,7 +331,9 @@ void JelloCube::update() {
 }
 
 void JelloCube::scatter() {
-    glm::vec<3, double> velChange(this->sideDis(this->gen), this->upDis(this->gen), this->sideDis(this->gen));
+    std::uniform_real_distribution<double> sideDis(-20.0, 20.0);
+    std::uniform_real_distribution<double> upDis(0, 30.0);
+    glm::vec<3, double> velChange(sideDis(this->gen), upDis(this->gen), sideDis(this->gen));
     for(glm::vec<3, double>& vel : this->velocities) {
         vel += velChange;
     }
@@ -337,12 +343,12 @@ void JelloCube::scatter() {
 const void JelloCube::calcVertexData() {
     this->vertexData.clear();
     // +x face
-    for(int j = 0; j < this->param; j++) {
-        for(int k = 0; k < this->param; k++) {
+    for(int j = 0; j < this->param1; j++) {
+        for(int k = 0; k < this->param1; k++) {
             std::vector<std::pair<int, int>> inds = {{j+1, k+1}, {j+1, k}, {j, k+1}, {j, k}};
             std::vector<glm::vec3> vertices(inds.size());
             std::transform(inds.begin(), inds.end(), vertices.begin(), [this](std::pair<int, int> ind) -> glm::vec3 {
-                return nodes[this->getInd(this->param, ind.first, ind.second)];
+                return nodes[this->getInd(this->param1, ind.first, ind.second)];
             });
             glm::vec3 normal = glm::cross(vertices[3] - vertices[2], vertices[0] - vertices[2]);
             std::vector<glm::vec3> normals = {normal, normal, normal, normal};
@@ -350,13 +356,13 @@ const void JelloCube::calcVertexData() {
             std::transform(inds.begin(), inds.end(), uvs.begin(), [this](std::pair<int, int> ind) -> glm::vec2 {
                 return glm::vec2(1 - (ind.first * this->restLen), ind.second * this->restLen);
             });
-            Cube::makeTile(vertices, normals, uvs);
+            this->makeTile(vertices, normals, uvs, false);
         }
     }
 
     // -x face
-    for(int j = 0; j < this->param; j++) {
-        for(int k = 0; k < this->param; k++) {
+    for(int j = 0; j < this->param1; j++) {
+        for(int k = 0; k < this->param1; k++) {
             std::vector<std::pair<int, int>> inds = {{j+1, k}, {j+1, k+1}, {j, k}, {j, k+1}};
             std::vector<glm::vec3> vertices(inds.size());
             std::transform(inds.begin(), inds.end(), vertices.begin(), [this](std::pair<int, int> ind) -> glm::vec3 {
@@ -368,17 +374,17 @@ const void JelloCube::calcVertexData() {
             std::transform(inds.begin(), inds.end(), uvs.begin(), [this](std::pair<int, int> ind) -> glm::vec2 {
                 return glm::vec2(ind.first * this->restLen, ind.second * this->restLen);
             });
-            Cube::makeTile(vertices, normals, uvs);
+            this->makeTile(vertices, normals, uvs, false);
         }
     }
 
     // +y face
-    for(int i = 0; i < this->param; i++) {
-        for(int k = 0; k < this->param; k++) {
+    for(int i = 0; i < this->param1; i++) {
+        for(int k = 0; k < this->param1; k++) {
             std::vector<std::pair<int, int>> inds = {{i+1, k+1}, {i, k+1}, {i+1, k}, {i, k}};
             std::vector<glm::vec3> vertices(inds.size());
             std::transform(inds.begin(), inds.end(), vertices.begin(), [this](std::pair<int, int> ind) -> glm::vec3 {
-                return nodes[this->getInd(ind.first, this->param, ind.second)];
+                return nodes[this->getInd(ind.first, this->param1, ind.second)];
             });
             glm::vec3 normal = glm::cross(vertices[3] - vertices[2], vertices[0] - vertices[2]);
             std::vector<glm::vec3> normals = {normal, normal, normal, normal};
@@ -386,13 +392,13 @@ const void JelloCube::calcVertexData() {
             std::transform(inds.begin(), inds.end(), uvs.begin(), [this](std::pair<int, int> ind) -> glm::vec2 {
                 return glm::vec2(ind.first * this->restLen, 1 - (ind.second * this->restLen));
             });
-            Cube::makeTile(vertices, normals, uvs);
+            this->makeTile(vertices, normals, uvs, false);
         }
     }
 
     // -y face
-    for(int i = 0; i < this->param; i++) {
-        for(int k = 0; k < this->param; k++) {
+    for(int i = 0; i < this->param1; i++) {
+        for(int k = 0; k < this->param1; k++) {
             std::vector<std::pair<int, int>> inds = {{i, k+1}, {i+1, k+1}, {i, k}, {i+1, k}};
             std::vector<glm::vec3> vertices(inds.size());
             std::transform(inds.begin(), inds.end(), vertices.begin(), [this](std::pair<int, int> ind) -> glm::vec3 {
@@ -404,17 +410,17 @@ const void JelloCube::calcVertexData() {
             std::transform(inds.begin(), inds.end(), uvs.begin(), [this](std::pair<int, int> ind) -> glm::vec2 {
                 return glm::vec2(ind.first * this->restLen, ind.second * this->restLen);
             });
-            Cube::makeTile(vertices, normals, uvs);
+            this->makeTile(vertices, normals, uvs, false);
         }
     }
 
     // +z face
-    for(int i = 0; i < this->param; i++) {
-        for(int j = 0; j < this->param; j++) {
+    for(int i = 0; i < this->param1; i++) {
+        for(int j = 0; j < this->param1; j++) {
             std::vector<std::pair<int, int>> inds = {{i, j+1}, {i+1, j+1}, {i, j}, {i+1, j}};
             std::vector<glm::vec3> vertices(inds.size());
             std::transform(inds.begin(), inds.end(), vertices.begin(), [this](std::pair<int, int> ind) -> glm::vec3 {
-                return nodes[this->getInd(ind.first, ind.second, this->param)];
+                return nodes[this->getInd(ind.first, ind.second, this->param1)];
             });
             glm::vec3 normal = glm::cross(vertices[3] - vertices[2], vertices[0] - vertices[2]);
             std::vector<glm::vec3> normals = {normal, normal, normal, normal};
@@ -422,13 +428,13 @@ const void JelloCube::calcVertexData() {
             std::transform(inds.begin(), inds.end(), uvs.begin(), [this](std::pair<int, int> ind) -> glm::vec2 {
                 return glm::vec2(ind.first * this->restLen, ind.second * this->restLen);
             });
-            Cube::makeTile(vertices, normals, uvs);
+            this->makeTile(vertices, normals, uvs, false);
         }
     }
 
     // -z face
-    for(int i = 0; i < this->param; i++) {
-        for(int j = 0; j < this->param; j++) {
+    for(int i = 0; i < this->param1; i++) {
+        for(int j = 0; j < this->param1; j++) {
             std::vector<std::pair<int, int>> inds = {{i+1, j+1}, {i, j+1}, {i+1, j}, {i, j}};
             std::vector<glm::vec3> vertices(inds.size());
             std::transform(inds.begin(), inds.end(), vertices.begin(), [this](std::pair<int, int> ind) -> glm::vec3 {
@@ -440,7 +446,7 @@ const void JelloCube::calcVertexData() {
             std::transform(inds.begin(), inds.end(), uvs.begin(), [this](std::pair<int, int> ind) -> glm::vec2 {
                 return glm::vec2(1 - (ind.first * this->restLen), ind.second * this->restLen);
             });
-            Cube::makeTile(vertices, normals, uvs);
+            this->makeTile(vertices, normals, uvs, false);
         }
     }
 }
