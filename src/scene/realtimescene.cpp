@@ -43,7 +43,7 @@ void RealtimeScene::initScene() {
     boundingBox->initialize();
     this->primitives.push_back(std::move(boundingBox));
 
-    std::unique_ptr<Primitive> jelloCube = std::make_unique<JelloCube>(getJelloMaterial(), 8, glm::vec3(0, 0, 0));
+    std::unique_ptr<Primitive> jelloCube = std::make_unique<JelloCube>(getJelloMaterial(), 8, glm::vec3(0, settings.bounds - 1, 0));
     jelloCube->initialize();
     this->primitives.push_back(std::move(jelloCube));
 
@@ -58,7 +58,7 @@ void RealtimeScene::initScene() {
 
 void RealtimeScene::resetScene() {
     this->primitives.erase(this->primitives.begin() + 1, this->primitives.end()); // erase all primitives except bounding box
-    std::unique_ptr<Primitive> jelloCube = std::make_unique<JelloCube>(getJelloMaterial(), 8, glm::vec3(0, 0, 0));
+    std::unique_ptr<Primitive> jelloCube = std::make_unique<JelloCube>(getJelloMaterial(), 8, glm::vec3(0, settings.bounds - 1, 0));
     jelloCube->initialize();
     this->primitives.push_back(std::move(jelloCube));
 }

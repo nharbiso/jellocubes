@@ -218,7 +218,7 @@ void JelloCube::computeAcceleration(std::vector<glm::vec<3, double>>& positions,
                                     std::vector<glm::vec<3, double>>& velocities,
                                     std::vector<glm::vec<3, double>>& acc,
                                     std::span<std::unique_ptr<Primitive>>& primitives) {
-    #pragma omp parallel for collapse(3)
+    // #pragma omp parallel for collapse(3)
     for(int i = 0; i <= this->param1; i++) {
         for(int j = 0; j <= this->param1; j++) {
             for(int k = 0; k <= this->param1; k++) {
@@ -250,7 +250,7 @@ void JelloCube::update(std::span<std::unique_ptr<Primitive>>& primitives) {
     double dt = settings.dt / 1000.0;
     if(settings.integrator == Integrator::EULER) {
         this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
-        #pragma omp parallel for collapse(3)
+        // #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param1; i++) {
             for(int j = 0; j <= this->param1; j++) {
                 for(int k = 0; k <= this->param1; k++) {
@@ -262,7 +262,7 @@ void JelloCube::update(std::span<std::unique_ptr<Primitive>>& primitives) {
         }
     } else if(settings.integrator == Integrator::RK4) {
         this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
-        #pragma omp parallel for collapse(3)
+        // #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param1; i++) {
             for(int j = 0; j <= this->param1; j++) {
                 for(int k = 0; k <= this->param1; k++) {
@@ -277,7 +277,7 @@ void JelloCube::update(std::span<std::unique_ptr<Primitive>>& primitives) {
         }
 
         this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
-        #pragma omp parallel for collapse(3)
+        // #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param1; i++) {
             for(int j = 0; j <= this->param1; j++) {
                 for(int k = 0; k <= this->param1; k++) {
@@ -292,7 +292,7 @@ void JelloCube::update(std::span<std::unique_ptr<Primitive>>& primitives) {
         }
 
         this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
-        #pragma omp parallel for collapse(3)
+        // #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param1; i++) {
             for(int j = 0; j <= this->param1; j++) {
                 for(int k = 0; k <= this->param1; k++) {
@@ -307,7 +307,7 @@ void JelloCube::update(std::span<std::unique_ptr<Primitive>>& primitives) {
         }
 
         this->computeAcceleration(this->nodes, this->velocities, acc, primitives);
-        #pragma omp parallel for collapse(3)
+        // #pragma omp parallel for collapse(3)
         for(int i = 0; i <= this->param1; i++) {
             for(int j = 0; j <= this->param1; j++) {
                 for(int k = 0; k <= this->param1; k++) {
