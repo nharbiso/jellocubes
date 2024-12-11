@@ -8,6 +8,10 @@ void insertVec(std::vector<GLfloat>& data, glm::vec<dim, float, glm::defaultp> d
         data.push_back(dataPoint[i]);
 }
 
+inline glm::vec3 sphericalToCartesian(float radius, float theta, float phi) {
+    return radius * glm::vec3(glm::sin(phi) * glm::cos(theta), glm::cos(phi), glm::sin(phi) * glm::sin(theta));
+}
+
 void TessellatedPrimitive::makeTile(std::vector<glm::vec3>& vertices,
                                     std::vector<glm::vec3>& normals,
                                     std::vector<glm::vec2>& uvs,
@@ -128,5 +132,37 @@ const std::optional<glm::vec3> Cube::findIntersectionPoint(glm::vec3 point) {
         }
         return this->objectToWorld * interPoint;
     }
+    return std::nullopt;
+}
+
+
+const void Sphere::calcVertexData() {
+    this->vertexData.clear();
+    float thetaStep = glm::radians(360.0f / this->param2);
+    float phiStep = glm::radians(180.0f / this->param1);
+    for(int i = 0; i < this->param2; i++) {
+        float currTheta = i * thetaStep;
+        for(int j = 0; j < this->param1; j++) {
+            float currPhi = phiStep * j;
+            std::vector<glm::vec3> vertices = {
+                sphericalToCartesian(this->radius, currTheta + thetaStep, currPhi),
+                sphericalToCartesian(this->radius, currTheta, currPhi),
+                sphericalToCartesian(this->radius, currTheta + thetaStep, currPhi + phiStep),
+                sphericalToCartesian(this->radius, currTheta, currPhi + phiStep)
+            };
+            std::vector<glm::vec3> normals(vertices.size());
+            std::transform(vertices.begin(), vertices.end(), normals.begin(), this->getSphereNormal);
+            std::vector<glm::vec2> uvs = {
+                this->getSphereUV(this->radius, currTheta + thetaStep, currPhi),
+                this->getSphereUV(this->radius, currTheta, currPhi),
+                this->getSphereUV(this->radius, currTheta + thetaStep, currPhi + phiStep),
+                this->getSphereUV(this->radius, currTheta, currPhi + phiStep)
+            };
+            this->makeTile(vertices, normals, uvs, false);
+        }
+    }
+}
+
+const std::optional<glm::vec3> Sphere::findIntersectionPoint(glm::vec3 point) {
     return std::nullopt;
 }

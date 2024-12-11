@@ -94,9 +94,13 @@ void RealtimeScene::addObstacle() {
     glm::vec3 translate(randFloat(-maxTranslate, maxTranslate), randFloat(-maxTranslate, maxTranslate), randFloat(-maxTranslate, maxTranslate));
     glm::mat4 ctm = glm::scale(glm::rotate(glm::translate(glm::mat4(1), translate), angle, rotAxis), scale);
 
-    std::unique_ptr<Primitive> cube = std::make_unique<Cube>(ctm, this->obstacleMaterial, 1, false);
-    cube->initialize();
-    this->primitives.insert(this->primitives.end() - 1, std::move(cube));
+    std::unique_ptr<Primitive> primitive;
+    if(rand() % 2 == 0)
+        primitive = std::make_unique<Cube>(ctm, this->obstacleMaterial, 1, false);
+    else
+        primitive = std::make_unique<Sphere>(ctm, this->obstacleMaterial, 25, 25);
+    primitive->initialize();
+    this->primitives.insert(this->primitives.end() - 1, std::move(primitive));
 }
 
 void RealtimeScene::bindSceneUniforms(GLuint shader) {
