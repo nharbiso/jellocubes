@@ -53,6 +53,8 @@ private:
                              std::span<std::unique_ptr<Primitive>>& primitives);
 
     std::mt19937 gen; // For scattering
+
+    const float maxPos = 1000;
 };
 
 #endif // JELLOCUBE_H

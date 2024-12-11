@@ -65,10 +65,8 @@ void RealtimeScene::resetScene() {
 
 void RealtimeScene::updateScene() {
     std::span<std::unique_ptr<Primitive>> interPrimitives(this->primitives.begin() + 1, this->primitives.end() - 1);
-    for(int i = 1; i < this->primitives.size(); i++) {
-        if (JelloCube* jelloCube = dynamic_cast<JelloCube*>(this->primitives[i].get())) {
-            jelloCube->update(interPrimitives);
-        }
+    if (JelloCube* jelloCube = dynamic_cast<JelloCube*>(this->primitives[this->primitives.size()-1].get())) {
+        jelloCube->update(interPrimitives);
     }
 }
 

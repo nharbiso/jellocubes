@@ -316,6 +316,8 @@ void JelloCube::update(std::span<std::unique_ptr<Primitive>>& primitives) {
                     F4vel[ind] = acc[ind] * dt;
 
                     this->nodes[ind] += (F1pos[ind] + 2.0 * F2pos[ind] + 2.0 * F3pos[ind] + F4pos[ind]) / 6.0;
+                    this->nodes[ind] = glm::min(this->nodes[ind], glm::vec<3, double>(this->maxPos));
+                    this->nodes[ind] = glm::max(this->nodes[ind], glm::vec<3, double>(-this->maxPos));
                     this->velocities[ind] += (F1vel[ind] + 2.0 * F2vel[ind] + 2.0 * F3vel[ind] + F4vel[ind]) / 6.0;
                 }
             }
