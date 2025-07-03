@@ -1,4 +1,6 @@
-## Final Project: Jello Cubes
+## CSCI 1230 Final Project: Jello Cubes
+
+### Project Members: Aidan and Nathan Harbison
 
 To run the program, simply open up the program in Qt Creator and click run. Be sure to set your working directory to the `jellocubes/` folder!
 
